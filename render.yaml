@@ -1,0 +1,14 @@
+# Render.com Deployment Configuration
+# This file tells Render how to build and run your app
+
+# Build Command (what Render runs to prepare your app)
+build: npm install
+
+# Start Command (what Render runs to start your server)
+start: node server.js
+
+# Environment (Node.js version)
+node: 18
+
+# Health Check Path
+healthCheckPath: /health
