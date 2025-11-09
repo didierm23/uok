@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- ========================================
+         NAVIGATION BAR
+         ======================================== -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2>👥 User Management System</h2>
+            </div>
+            <div class="nav-menu">
+                <button id="nav-register" class="nav-btn active">Register</button>
+                <button id="nav-login" class="nav-btn">Login</button>
+                <button id="nav-users" class="nav-btn" style="display: none;">Users</button>
+                <button id="nav-logout" class="nav-btn logout-btn" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ========================================
+         MAIN CONTAINER
+         ======================================== -->
+    <div class="container main-container">
+        
+        <!-- ========================================
+             WELCOME MESSAGE (shown when logged in)
+             ======================================== -->
+        <div id="welcome-message" class="welcome-message" style="display: none;">
+            <h3>Welcome, <span id="username-display"></span>! 👋</h3>
+            <p>You are logged in successfully.</p>
+        </div>
+
+        <!-- ========================================
+             ALERT BOX (for success/error messages)
+             ======================================== -->
+        <div id="alert-box" class="alert-box" style="display: none;">
+            <span id="alert-message"></span>
+            <button class="alert-close" onclick="closeAlert()">&times;</button>
+        </div>
+
+        <!-- ========================================
+             REGISTRATION FORM
+             ======================================== -->
+        <div id="register-section" class="section">
+            <div class="card">
+                <h2>Create Account</h2>
+                <p class="subtitle">Register to get started</p>
+                
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-username">Username</label>
+                        <input 
+                            type="text" 
+                            id="reg-username" 
+                            placeholder="Choose a username" 
+                            required
+                            minlength="3"
+                        >
+                        <small class="form-hint">At least 3 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input 
+                            type="email" 
+                            id="reg-email" 
+                            placeholder="your.email@example.com" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <input 
+                            type="password" 
+                            id="reg-password" 
+                            placeholder="Create a strong password" 
+                            required
+                            minlength="6"
+                        >
+                        <small class="form-hint">At least 6 characters</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-password-confirm">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="reg-password-confirm" 
+                            placeholder="Re-enter your password" 
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Create Account</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span> Creating...
+                        </span>
+                    </button>
+                </form>
+
+                <p class="form-footer">
+                    Already have an account? 
+                    <a href="#" id="link-to-login">Login here</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- ========================================
+             LOGIN FORM
+             ======================================== -->
+        <div id="login-section" class="section" style="display: none;">
+            <div class="card">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Login to your account</p>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input 
+                            type="email" 
+                            id="login-email" 
+                            placeholder="your.email@example.com" 
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            placeholder="Enter your password" 
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Login</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span> Logging in...
+                        </span>
+                    </button>
+                </form>
+
+                <p class="form-footer">
+                    Don't have an account? 
+                    <a href="#" id="link-to-register">Register here</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- ========================================
+             USERS LIST (protected, requires login)
+             ======================================== -->
+        <div id="users-section" class="section" style="display: none;">
+            <div class="card">
+                <div class="section-header">
+                    <h2>Registered Users</h2>
+                    <button id="refresh-users" class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div id="loading-users" class="loading">
+                    <span class="spinner"></span>
+                    <p>Loading users...</p>
+                </div>
+
+                <div id="users-container" style="display: none;">
+                    <div id="users-stats" class="stats-box">
+                        <p>Total Users: <strong id="total-users">0</strong></p>
+                    </div>
+
+                    <div id="users-list" class="users-list">
+                        <!-- Users will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <div id="users-error" class="error-message" style="display: none;">
+                    <p>Failed to load users. Please try again.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         FOOTER
+         ======================================== -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 User Management System. Built By Eng AP SHEMA using Node.js, Express, and PostgreSQL.</p>
+        </div>
+    </footer>
+
+    <!-- ========================================
+         JAVASCRIPT
+         ======================================== -->
+    <script src="app.js"></script>
+</body>
+</html>
