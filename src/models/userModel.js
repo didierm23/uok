@@ -2,7 +2,6 @@
 // =====================================================
 // USER MODEL (Sequelize Version)
 // =====================================================
-
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
@@ -11,17 +10,21 @@ require('dotenv').config();
 // =====================================================
 const DATABASE_URL =
   process.env.DATABASE_URL ||
-  'postgresql://user_management_db_zyy5_user:4hKAVRhubndBcEERYiXiyjLmTTfpsdxu@dpg-d46rtcs9c44c738mqa8g-a.oregon-postgres.render.com/user_management_db_zyy5';
+  `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',
   logging: false,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
+  dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
 });
 
 // =====================================================
@@ -35,25 +38,29 @@ const User = sequelize.define(
       allowNull: false,
       unique: true,
       validate: {
-        len: {
-          args: [3, 100],
-          msg: 'Username must be between 3 and 100 characters',
-        },
+        len: [3, 100],
       },
     },
     email: {
       type: DataTypes.STRING(150),
       allowNull: false,
       unique: true,
-      validate: {
-        isEmail: {
-          msg: 'Must be a valid email address',
-        },
-      },
+      validate: { isEmail: true },
     },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,
+    },
+    // Explicit timestamps for safer sync with existing tables
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true, // allow null for older rows
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
   },
   {
@@ -68,55 +75,48 @@ const User = sequelize.define(
 const syncDatabase = async () => {
   try {
     console.log('🔄 Synchronizing User model with database...');
+
+    // ✅ For development: drop and recreate cleanly
+    // await sequelize.sync({ force: true });
+
+    // ✅ For production: safe alter without data loss
     await sequelize.sync({ alter: true });
+
     console.log('✅ Database synchronized successfully.');
   } catch (error) {
-    console.error('❌ Failed to sync database:', error);
+    console.error('❌ Failed to sync database:', error.message);
   }
 };
 
 // =====================================================
-// CUSTOM QUERY METHODS (FOR CONTROLLER USAGE)
+// CUSTOM QUERY METHODS
 // =====================================================
 const UserModel = {
-  createUser: async (username, email, hashedPassword) => {
-    const user = await User.create({ username, email, password: hashedPassword });
-    return { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt };
-  },
+  createUser: async (username, email, hashedPassword) =>
+    await User.create({ username, email, password: hashedPassword }),
 
-  findUserByEmail: async (email) => {
-    return await User.findOne({ where: { email } });
-  },
+  findUserByEmail: async (email) => await User.findOne({ where: { email } }),
 
-  findUserByUsername: async (username) => {
-    return await User.findOne({ where: { username } });
-  },
+  findUserByUsername: async (username) => await User.findOne({ where: { username } }),
 
-  findUserById: async (id) => {
-    return await User.findByPk(id, {
+  findUserById: async (id) =>
+    await User.findByPk(id, {
       attributes: ['id', 'username', 'email', 'createdAt'],
-    });
-  },
+    }),
 
-  getAllUsers: async () => {
-    return await User.findAll({
+  getAllUsers: async () =>
+    await User.findAll({
       attributes: ['id', 'username', 'email', 'createdAt'],
       order: [['createdAt', 'DESC']],
-    });
-  },
+    }),
 };
-
-// =====================================================
-// EXPORTS
-// =====================================================
-// Export both the raw Sequelize model and custom wrapper
-module.exports = { User, UserModel, sequelize, syncDatabase };
-
 
 // =====================================================
 // EXPORTS
 // =====================================================
 module.exports = { sequelize, User, UserModel, syncDatabase };
+
+
 
 
 // // src/models/userModel.js
